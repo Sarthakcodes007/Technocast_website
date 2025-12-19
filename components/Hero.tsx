@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Script from 'next/script';
 
 declare global {
   interface Window {
@@ -12,42 +13,32 @@ declare global {
 export default function Hero() {
   const vantaRef = useRef<HTMLDivElement>(null);
   const vantaEffect = useRef<any>(null);
+  const [threeLoaded, setThreeLoaded] = useState(false);
+  const [vantaLoaded, setVantaLoaded] = useState(false);
 
+  // Initialize Vanta when both scripts are ready
   useEffect(() => {
-    if (!vantaRef.current) return;
+    if (!threeLoaded || !vantaLoaded || !vantaRef.current) return;
 
-    // Load Three.js and Vanta.js dynamically
-    const loadVanta = async () => {
-      if (typeof window !== 'undefined' && !window.VANTA) {
-        // Load Three.js
-        const threeScript = document.createElement('script');
-        threeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js';
-        threeScript.async = true;
-        document.head.appendChild(threeScript);
-
-        // Load Vanta.js NET effect from local file
-        const vantaScript = document.createElement('script');
-        vantaScript.src = '/vanta.net.min.js';
-        vantaScript.async = true;
-        document.head.appendChild(vantaScript);
-
-        // Wait for scripts to load
-        await new Promise((resolve) => {
-          const checkVanta = () => {
-            if (window.THREE && window.VANTA) {
-              resolve(true);
-            } else {
-              setTimeout(checkVanta, 100);
-            }
-          };
-          checkVanta();
-        });
+    const initializeVanta = () => {
+      if (!vantaRef.current || !window.VANTA || !window.THREE) {
+        console.warn('Vanta.js or Three.js not available');
+        return;
       }
 
-      // Initialize Vanta effect
-      if (window.VANTA && vantaRef.current) {
+      try {
+        // Destroy existing instance if any
+        if (vantaEffect.current) {
+          try {
+            vantaEffect.current.destroy();
+          } catch (e) {
+            // Ignore destroy errors
+          }
+        }
+
         vantaEffect.current = window.VANTA.NET({
           el: vantaRef.current,
+          THREE: window.THREE,
           mouseControls: true,
           touchControls: true,
           gyroControls: false,
@@ -55,30 +46,65 @@ export default function Hero() {
           minWidth: 200.00,
           scale: 1.00,
           scaleMobile: 1.00,
-          color: 0xffffff, // White color for blue and white theme
-          backgroundColor: 0x0f172a, // Blue background matching site theme
+          color: 0xffffff,
+          backgroundColor: 0x0f172a,
           points: 12.00,
           maxDistance: 25.00,
           spacing: 18.00,
           showDots: true,
         });
+      } catch (error) {
+        console.error('Error initializing Vanta.js:', error);
       }
     };
 
-    loadVanta();
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      initializeVanta();
+    }, 100);
 
-    // Cleanup function
     return () => {
+      clearTimeout(timer);
       if (vantaEffect.current) {
-        vantaEffect.current.destroy();
+        try {
+          vantaEffect.current.destroy();
+        } catch (error) {
+          console.error('Error destroying Vanta effect:', error);
+        }
+        vantaEffect.current = null;
       }
     };
-  }, []);
+  }, [threeLoaded, vantaLoaded]);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-      {/* Vanta.js animated background */}
-      <div ref={vantaRef} className="absolute inset-0 w-full h-full"></div>
+    <>
+      {/* Load Three.js */}
+      <Script
+        src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"
+        strategy="afterInteractive"
+        onLoad={() => {
+          setThreeLoaded(true);
+        }}
+        onError={(e) => {
+          console.error('Failed to load Three.js:', e);
+        }}
+      />
+      
+      {/* Load Vanta.js */}
+      <Script
+        src="/vanta.net.min.js"
+        strategy="afterInteractive"
+        onLoad={() => {
+          setVantaLoaded(true);
+        }}
+        onError={(e) => {
+          console.error('Failed to load Vanta.js:', e);
+        }}
+      />
+
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+        {/* Vanta.js animated background */}
+        <div ref={vantaRef} className="absolute inset-0 w-full h-full"></div>
       
       {/* Content overlay */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -118,6 +144,7 @@ export default function Hero() {
         </div>
       </div>
     </section>
+    </>
   );
 }
 
