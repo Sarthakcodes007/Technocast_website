@@ -13,58 +13,73 @@ declare global {
 export default function Hero() {
   const vantaRef = useRef<HTMLDivElement>(null);
   const vantaEffect = useRef<any>(null);
-  const [threeLoaded, setThreeLoaded] = useState(false);
-  const [vantaLoaded, setVantaLoaded] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
-  // Initialize Vanta when both scripts are ready
+  // Continuously check for scripts and initialize when ready
   useEffect(() => {
-    if (!threeLoaded || !vantaLoaded || !vantaRef.current) return;
+    if (!vantaRef.current || typeof window === 'undefined') return;
 
-    const initializeVanta = () => {
-      if (!vantaRef.current || !window.VANTA || !window.THREE) {
-        console.warn('Vanta.js or Three.js not available');
-        return;
-      }
+    let mounted = true;
+    let checkInterval: NodeJS.Timeout;
 
-      try {
-        // Destroy existing instance if any
-        if (vantaEffect.current) {
-          try {
-            vantaEffect.current.destroy();
-          } catch (e) {
-            // Ignore destroy errors
+    const checkAndInit = () => {
+      if (!mounted || !vantaRef.current) return;
+      
+      // Check if both scripts are loaded
+      if (window.THREE && window.VANTA && window.VANTA.NET) {
+        try {
+          // Destroy existing instance if any
+          if (vantaEffect.current) {
+            try {
+              vantaEffect.current.destroy();
+            } catch (e) {
+              // Ignore destroy errors
+            }
           }
-        }
 
-        vantaEffect.current = window.VANTA.NET({
-          el: vantaRef.current,
-          THREE: window.THREE,
-          mouseControls: true,
-          touchControls: true,
-          gyroControls: false,
-          minHeight: 200.00,
-          minWidth: 200.00,
-          scale: 1.00,
-          scaleMobile: 1.00,
-          color: 0xffffff,
-          backgroundColor: 0x0f172a,
-          points: 12.00,
-          maxDistance: 25.00,
-          spacing: 18.00,
-          showDots: true,
-        });
-      } catch (error) {
-        console.error('Error initializing Vanta.js:', error);
+          // Initialize Vanta.js
+          vantaEffect.current = window.VANTA.NET({
+            el: vantaRef.current,
+            THREE: window.THREE,
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0xffffff,
+            backgroundColor: 0x0f172a,
+            points: 12.00,
+            maxDistance: 25.00,
+            spacing: 18.00,
+            showDots: true,
+          });
+
+          // Clear interval once initialized
+          if (checkInterval) {
+            clearInterval(checkInterval);
+          }
+        } catch (error) {
+          console.error('Error initializing Vanta.js:', error);
+        }
       }
     };
 
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      initializeVanta();
-    }, 100);
+    // Start checking immediately and then every 100ms
+    checkAndInit();
+    checkInterval = setInterval(checkAndInit, 100);
+
+    // Also check when isReady changes
+    if (isReady) {
+      checkAndInit();
+    }
 
     return () => {
-      clearTimeout(timer);
+      mounted = false;
+      if (checkInterval) {
+        clearInterval(checkInterval);
+      }
       if (vantaEffect.current) {
         try {
           vantaEffect.current.destroy();
@@ -74,16 +89,19 @@ export default function Hero() {
         vantaEffect.current = null;
       }
     };
-  }, [threeLoaded, vantaLoaded]);
+  }, [isReady]);
 
   return (
     <>
-      {/* Load Three.js */}
+      {/* Load Three.js first */}
       <Script
+        id="threejs"
         src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"
         strategy="afterInteractive"
         onLoad={() => {
-          setThreeLoaded(true);
+          console.log('Three.js loaded');
+          // Trigger check
+          setIsReady(true);
         }}
         onError={(e) => {
           console.error('Failed to load Three.js:', e);
@@ -92,10 +110,13 @@ export default function Hero() {
       
       {/* Load Vanta.js */}
       <Script
+        id="vantajs"
         src="/vanta.net.min.js"
         strategy="afterInteractive"
         onLoad={() => {
-          setVantaLoaded(true);
+          console.log('Vanta.js loaded');
+          // Trigger check
+          setIsReady(true);
         }}
         onError={(e) => {
           console.error('Failed to load Vanta.js:', e);
