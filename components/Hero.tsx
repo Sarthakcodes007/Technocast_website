@@ -108,18 +108,29 @@ export default function Hero() {
         }}
       />
       
-      {/* Load Vanta.js */}
+      {/* Load Vanta.js - try CDN first, fallback to local */}
       <Script
         id="vantajs"
-        src="/vanta.net.min.js"
+        src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"
         strategy="afterInteractive"
         onLoad={() => {
-          console.log('Vanta.js loaded');
+          console.log('Vanta.js loaded from CDN');
           // Trigger check
           setIsReady(true);
         }}
         onError={(e) => {
-          console.error('Failed to load Vanta.js:', e);
+          console.error('Failed to load Vanta.js from CDN, trying local:', e);
+          // Fallback to local file
+          const localScript = document.createElement('script');
+          localScript.src = '/vanta.net.min.js';
+          localScript.onload = () => {
+            console.log('Vanta.js loaded from local');
+            setIsReady(true);
+          };
+          localScript.onerror = () => {
+            console.error('Failed to load Vanta.js from local file');
+          };
+          document.head.appendChild(localScript);
         }}
       />
 
