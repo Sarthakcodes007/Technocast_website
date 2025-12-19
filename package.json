@@ -1,0 +1,36 @@
+{
+  "name": "technocast",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "next": "^14.2.18",
+    "better-sqlite3": "^11.0.0",
+    "nodemailer": "^6.9.8",
+    "lucide-react": "^0.344.0",
+    "three": "^0.160.0",
+    "vanta": "^0.5.24"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/nodemailer": "^6.4.14",
+    "typescript": "^5",
+    "tailwindcss": "^3.4.4",
+    "postcss": "^8.4.38",
+    "autoprefixer": "^10.4.19"
+  },
+  "overrides": {
+    "@nodelib/fs.walk": "1.2.7"
+  }
+}
+
