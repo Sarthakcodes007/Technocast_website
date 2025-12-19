@@ -103,6 +103,9 @@ export default function Hero() {
       />
 
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+        {/* Fallback background in case Vanta.js doesn't load */}
+        <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-[#0f172a] via-[#1e3a8a] to-[#0f172a]"></div>
+        
         {/* Vanta.js animated background */}
         <div ref={vantaRef} className="absolute inset-0 w-full h-full"></div>
       
