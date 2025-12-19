@@ -20,7 +20,7 @@ export default function Hero() {
     if (!vantaRef.current || typeof window === 'undefined') return;
 
     let mounted = true;
-    let checkInterval: NodeJS.Timeout;
+    let checkInterval: NodeJS.Timeout | null = null;
 
     const checkAndInit = () => {
       if (!mounted || !vantaRef.current) return;
@@ -56,9 +56,12 @@ export default function Hero() {
             showDots: true,
           });
 
+          console.log('Vanta.js initialized successfully');
+
           // Clear interval once initialized
           if (checkInterval) {
             clearInterval(checkInterval);
+            checkInterval = null;
           }
         } catch (error) {
           console.error('Error initializing Vanta.js:', error);
@@ -79,6 +82,7 @@ export default function Hero() {
       mounted = false;
       if (checkInterval) {
         clearInterval(checkInterval);
+        checkInterval = null;
       }
       if (vantaEffect.current) {
         try {
